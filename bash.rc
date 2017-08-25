@@ -1,0 +1,49 @@
+docker run -it tensorflow/tensorflow:1.1.0 bash
+python
+
+# python
+
+import tensorflow as tf
+hello = tf.constant('Hello, TensorFlow!')
+sess = tf.Session() # It will print some warnings here.
+print(sess.run(hello))
+
+#Quitter Python (Ctrl+D)
+
+# Repertoire qui contient les images
+mkdir tf_files
+
+docker run -it \
+  --publish 6006:6006 \
+  --volume ${HOME}/tf_files:/tf_files \
+  --workdir /tf_files \
+  tensorflow/tensorflow:1.1.0 bash
+
+curl -O http://download.tensorflow.org/example_images/flower_photos.tgz
+tar xzf flower_photos.tgz
+
+#Check
+ls flower_photos
+
+#On récupère le script Python 'retrain.py'
+curl -O https://raw.githubusercontent.com/tensorflow/tensorflow/r1.1/tensorflow/examples/image_retraining/retrain.py
+tensorboard --logdir training_summaries &
+
+python retrain.py \
+  --bottleneck_dir=bottlenecks \
+  --how_many_training_steps=500 \
+  --model_dir=inception \
+  --summaries_dir=training_summaries/basic \
+  --output_graph=retrained_graph.pb \
+  --output_labels=retrained_labels.txt \
+  --image_dir=flower_photos
+
+curl -L https://goo.gl/3lTKZs > label_image.py
+
+python label_image.py flower_photos/daisy/21652746_cc379e0eea_m.jpg
+
+#daisy (score = 0.98557)
+#sunflowers (score = 0.01155)
+#dandelion (score = 0.00205)
+#tulips (score = 0.00078)
+#roses (score = 0.00005)
